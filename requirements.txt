@@ -1,0 +1,7 @@
+streamlit==0.84.0
+plotly==4.14.3
+scipy==1.6.3
+certifi==2020.6.20
+pandas==1.0.5
+numpy==1.21.1
+statsmodels==0.12.2
