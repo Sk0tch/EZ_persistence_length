@@ -5,7 +5,6 @@ import datetime as dt
 
 from src.pages.Utils import Parser, DataProcessor
 
-
 def DataInput():
     uploaded_file = st.file_uploader("Choose .dat file")
     if uploaded_file is not None:
@@ -15,8 +14,11 @@ def DataInput():
         chains_coord_df = Parser.list_chains_to_df(chains_coord_list)
         chains_coord_df.to_csv(os.path.join(st.session_state.data_folder_path, 'chains_coord.csv'), index=None)
 
-        angle_len_df = DataProcessor.angle_len_df(chains_coord_list)
+        angle_len_df = DataProcessor.len_cos_df(chains_coord_list)
         angle_len_df.to_csv(os.path.join(st.session_state.data_folder_path, 'angles.csv'), index=None)
+
+        group = DataProcessor.group_data(angle_len_df)
+        group.to_csv(os.path.join(st.session_state.data_folder_path, 'group.csv'), index=None)
 
         return True
     return False

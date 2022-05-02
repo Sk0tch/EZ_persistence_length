@@ -11,7 +11,7 @@ from src.pages.Utils import Parser, LinearMath, Painter, DataProcessor, LoadData
 
 
 
-def PersistenceLen():
+def DistributionType():
     # if st.session_state.is_data_calc != True:
     st.header('Persistence length calculation')
 

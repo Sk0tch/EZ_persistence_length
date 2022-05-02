@@ -15,11 +15,13 @@ sns.set_theme()
 
 DATA_MAP = {
     'angles':'angles.csv',
-    'coord':'chains_coord.csv'
+    'coord':'chains_coord.csv',
+    'group':'group.csv',
 }
 
 def LoadData(data_type='angles'):
     return pd.read_csv(os.path.join(st.session_state.data_folder_path, DATA_MAP[data_type]))
+
 
 class Painter:
 	@staticmethod
@@ -30,19 +32,20 @@ class Painter:
 		return fig
 
 	@staticmethod
-	def plot_line_color(x, y, color):
+	def plot_line_color(x, y, color, title=''):
 		fig = go.Figure()
 		fig.add_trace(go.Scatter(x=x, y=y, mode='lines+markers',  name='angle'
 								 , marker=dict(color=color
 								                 , colorbar=dict(title="count")
 								                 , colorscale='Inferno')
-                                 # , title="Средний квадрат угла от длины сегмента"
+                                 , text=color
 								))
 
 		fig.update_layout(legend_orientation="h",
 		                  legend=dict(x=.5, xanchor="center"),
-		                  margin=dict(l=0, r=0, t=0, b=0))
-		fig.update_traces(hoverinfo="all", hovertemplate="Расстояние: %{x}<br>Значение: %{y}")
+		                  margin=dict(l=0, r=0, t=0, b=0),
+                          )
+		fig.update_traces(hoverinfo="all", hovertemplate="Расстояние: %{x} nm<br>Значение: %{y}<br>Количество:%{text} ")
 		return fig
 
 
@@ -51,6 +54,10 @@ class LinearMath:
     def make_vector(p1, p2):
         """вектор из точек"""
         return p2[0] - p1[0], p2[1] - p1[1]
+
+    @staticmethod
+    def sum_vectors(v1, v2):
+        return v1[0] + v2[0], v1[1] + v2[1]
 
     @staticmethod
     def get_len(v):
@@ -114,33 +121,40 @@ class Parser:
 class DataProcessor():
 
     @staticmethod
-    def avg_angle(vector_list, max_n=None, return_cos=False):
+    def avg_angle(vector_list,
+                # max_n=None,
+                return_cos=False):
         """
         вычисление среднего угла между векторами массива vector_list
         возвращает DataFrame:
-            возвращает два np массива: расстояние между точками - угол между точками
+            # возвращает два np массива: расстояние между точками - угол между точками
         """
-        if max_n == None:
-            max_n = len(vector_list)
+        # if max_n == None:
+        #     max_n = len(vector_list)
         max_point = len(vector_list)
 
         df = pd.DataFrame()
-        angle = []
-        distance, segment_len = [], []
-
-        for n in (range(max_n)):
+        cos = []
+        distance = []
+        R = []
+        for n in (range(max_point)):
+            vector_end = [0, 0]
             for i in range(max_point-n):
-                angle.append(LinearMath.get_angle(vector_list[n], vector_list[n+i], return_cos=return_cos))
+                vector_end = LinearMath.sum_vectors(vector_end, vector_list[n+i])
+                R.append(LinearMath.get_len(vector_end))
+                cos.append(LinearMath.get_angle(vector_list[n], vector_list[n+i], return_cos=return_cos))
                 if i == 0:
-                    # segment_len.append(0)
-                    distance.append(0)
+                    distance.append(LinearMath.get_len(vector_list[n+i]))
                 else:
-                    distance.append(distance[-1] + LinearMath.get_len(vector_list[i]))
-                    # segment_len.append(LinearMath.get_len(vector_list[n], vector_list[n+i]))
-        return np.array(distance, dtype=float, copy=False), np.array(angle, dtype=float, copy=False)
+                    distance.append(distance[-1] + LinearMath.get_len(vector_list[n+i]))
+        distance = np.array(distance, dtype=float, copy=False)
+        cos = np.array(cos, dtype=float, copy=False)
+        R = np.array(R, dtype=float, copy=False)
+        df_tmp = pd.DataFrame(data=np.dstack((distance, cos, R))[0], columns=['distance', 'cos', 'R'])
+        return df_tmp
 
     @staticmethod
-    def angle_len_df(chain_list, calc='angle'):
+    def len_cos_df(chain_list, calc='cos'):
         if calc == 'cos':
             return_cos = True
         elif calc == 'angle':
@@ -154,8 +168,17 @@ class DataProcessor():
             vectors = []
             for i in (range(len(chain)-1)):
                 vectors.append(LinearMath.make_vector(chain[i], chain[i+1]))
-            distance, angle = DataProcessor.avg_angle(vectors, return_cos=return_cos)
-            df_tmp = pd.DataFrame(data=np.dstack((distance, angle))[0], columns=['distance', 'angle'])
-            df_tmp['chain_num'] = n
+            df_tmp = DataProcessor.avg_angle(vectors, return_cos=return_cos)
+            df_tmp['chain_ind'] = n
+            df_tmp['angle'] = df_tmp['cos'].apply(lambda x: np.arccos(x))
+            df_tmp['sq_angle'] = df_tmp['angle']**2
             df_final = df_final.append(df_tmp)
         return df_final
+
+    @staticmethod
+    def group_data(data):
+        df_work = data.copy()
+        df_work['distance'] = df_work['distance'].round(-1).copy()
+        group = df_work.groupby('distance').agg({'angle':['count', 'mean'], 'sq_angle':'mean', 'cos':'mean'}).dropna().reset_index()
+        group.columns = ['distance', 'count', 'ang_mean', 'sq_ang_mean', 'cos_mean']
+        return group
