@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from scipy.stats import linregress
 from scipy.optimize import curve_fit
+from scipy.stats import normaltest
+from scipy.stats import shapiro
 
 import plotly.express as px
 import plotly.graph_objects as go
@@ -19,6 +21,10 @@ MODE_PARAM = {
 def exp_function(x, a, b, c):
     return a*(x**b) + c
 
+def exp_function_P(x, p):
+    e = 2.718281828459045
+    # return 4*p*x(1 - 2*p/x * (1 - e**(-x/(2*p))))
+    return 4*p*x*(1-2*(p/x)*(1 - e**(-x/(2*p))))
 
 def plot_approximation(x_data, y_data, popt, x_name='distance', y_name='angle', title=''):
     fig = go.Figure()
@@ -29,7 +35,7 @@ def plot_approximation(x_data, y_data, popt, x_name='distance', y_name='angle', 
     ))
     fig.add_trace(go.Scatter(
                 x=x_data,
-                y=[exp_function(x, popt[0], popt[1], popt[2]) for x in x_data],
+                y=[exp_function_P(x, popt[0]) for x in x_data],
                 mode="lines",
                 line=dict(color='red', width=2, dash='dash'),
                 name="fit"
@@ -56,17 +62,21 @@ def approximation_block(group, y_name=None, x_name='distance'):
     data = group[(group[x_name]>=min_x) & (group[x_name]<=max_x)].copy()
     x = data[x_name]
     y = data[y_name]
-    popt, pcov = curve_fit(exp_function, x, y, p0=(1, 1/2, 1))
+    # popt, pcov = curve_fit(exp_function, x, y, p0=(1, 1/2, 1))
+    popt, pcov = curve_fit(exp_function_P, x, y)
     perr = np.sqrt(np.diag(pcov))
-    st.plotly_chart(plot_approximation(x, y, popt, x_name=x_name, y_name=y_name, title='approximation R^2(len) by f(x)=a*(x**b) + c'))
-    st.write(f'a*(x**b) + c')
-    col_a1, col_a2, col_a3 = st.columns(3)
-    with col_a1:
-        st.write(f'a = {popt[0]:.2f} ± {perr[0]:.2f}')
-    with col_a2:
-        st.write(f'b = {popt[1]:.2f} ± {perr[1]:.2f}')
-    with col_a3:
-        st.write(f'c = {popt[2]:.2f} ± {perr[2]:.2f}')
+    st.plotly_chart(plot_approximation(x, y, popt, x_name=x_name, y_name=y_name, title='approximation R^2(len) by f(x)=4*p*x*(1-2*(p/x)*(1-e**(-x/(2*p))))'))
+    st.write('4*p*x(1 - 2*p/x * (1 - e**(-x/(2*p))))')
+    st.write(f'p = {popt[0]:.2f} ± {perr[0]:.2f}')
+
+    # st.write(f'a*(x**b) + c')
+    # col_a1, col_a2, col_a3 = st.columns(3)
+    # with col_a1:
+    #     st.write(f'a = {popt[0]:.2f} ± {perr[0]:.2f}')
+    # with col_a2:
+    #     st.write(f'b = {popt[1]:.2f} ± {perr[1]:.2f}')
+    # with col_a3:
+    #     st.write(f'c = {popt[2]:.2f} ± {perr[2]:.2f}')
 
 def update_slider():
     st.session_state.slider = st.session_state.numeric1, st.session_state.numeric2
@@ -113,3 +123,8 @@ def DistributionType():
     len = st.session_state.hist_mun
     angles['distance'] = angles['distance'].round(-1)
     st.plotly_chart(px.histogram(angles[angles['distance']==len], x='angle', title='N(θ)'))
+    data_val = list(angles[angles['distance']==len]['angle'])
+    # stat, p = normaltest(data_val)
+    stat, p = normaltest(data_val)
+    st.write(f"p = {p}")
+    print(data_val)
