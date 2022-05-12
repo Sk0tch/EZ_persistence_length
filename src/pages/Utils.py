@@ -7,11 +7,8 @@ import streamlit as st
 from random import random
 from scipy.stats import linregress
 
-import matplotlib.pyplot as plt
-import seaborn as sns
 import plotly.express as px
 import plotly.graph_objects as go
-sns.set_theme()
 
 DATA_MAP = {
     'angles':'angles.csv',
