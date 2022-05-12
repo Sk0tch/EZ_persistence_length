@@ -7,7 +7,7 @@ from scipy.stats import linregress
 import plotly.express as px
 import plotly.graph_objects as go
 
-from src.pages.Utils import Parser, LinearMath, Painter, DataProcessor, LoadData
+from src.pages.Utils import Parser, LinearMath, Painter, DataProcessor, LoadData, VAR_NAME
 
 MODE_PARAM = {
 'Средний квадрат угла':'sq_ang_mean',
@@ -15,12 +15,6 @@ MODE_PARAM = {
 'Средний угол':'ang_mean'
 }
 
-
-VAR_NAME = {
-'sq_ang_mean':'θ<sup>2</sup>',
-'ln_cos':'ln(<cos>)',
-'ang_mean':'θ'
-}
 
 def per_sq_ang(slope, stderr):
     return 1/slope, 1/slope**2 * stderr
@@ -105,18 +99,13 @@ def update_numin():
 
 def PersistenceLen():
     st.header('Persistence length calculation')
-
-    group = LoadData('group')
-
-    st.dataframe(group.head(5))
-
     value_name = st.selectbox('Способ подсчета',
                                 MODE_PARAM.keys())
-
+    group = LoadData('group')
     x = group['distance']
     y = group[MODE_PARAM[value_name]]
     color = group['count']
-    st.plotly_chart(Painter.plot_line_color(x, y, color))
+    st.plotly_chart(Painter.plot_line_color(x, y, color, y_name=VAR_NAME[MODE_PARAM[value_name]]))
 
     st.subheader('Approximation')
 

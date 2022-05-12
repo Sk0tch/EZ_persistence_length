@@ -16,33 +16,73 @@ DATA_MAP = {
     'group':'group.csv',
 }
 
+VAR_NAME = {
+    'sq_ang_mean':'<θ<sup>2</sup>>',
+    'ln_cos':'ln(<cos>)',
+    'ang_mean':'<θ>',
+    'R_sq_mean':'<R<sup>2</sup>>',
+    'R_mean':'<R>',
+}
+
 def LoadData(data_type='angles'):
     return pd.read_csv(os.path.join(st.session_state.data_folder_path, DATA_MAP[data_type]))
 
 
 class Painter:
-	@staticmethod
-	def plot_chains(chains_df, max_chains=5):
-		fig = px.line(chains_df[chains_df['chain_ind']<max_chains], x='x', y='y', color='chain_ind'
-                        , title='Отображение входных данных'
-                        )
-		return fig
+    # @staticmethod
+    # def plot_approximation(x_data, y_data, popt, x_name='distance', y_name='angle'):
+    #     fig = go.Figure()
+    #     fig.add_trace(go.Scatter(
+    #                 x=x_data,
+    #                 y=y_data,
+    #                 name="data"
+    #     ))
+    #     fig.add_trace(go.Scatter(
+    #                 x=x_data,
+    #                 y=[exp_function(x, popt[0], popt[1], popt[2]) for x in x_data],
+    #                 mode="lines",
+    #                 line=dict(color='red', width=2, dash='dash'),
+    #                 name="fit"
+    #     ))
+    #     fig.update_xaxes(range=[x_data.min(), x_data.max()])
+    #     fig.update_yaxes(range=[y_data.min(), y_data.max()])
+    #     fig.update_layout(
+    #                 xaxis_title=x_name,
+    #                 yaxis_title=VAR_NAME[y_name],
+    #                 width=600,
+    #                 height=600,
+    #                 legend=dict(
+    #                     yanchor="top",
+    #                     y=0.99,
+    #                     xanchor="left",
+    #                     x=0.01
+    #                 )
+    #     )
+    #     return fig
 
-	@staticmethod
-	def plot_line_color(x, y, color, title=''):
-		fig = go.Figure()
-		fig.add_trace(go.Scatter(x=x, y=y, mode='lines+markers',  name='angle'
-								 , marker=dict(color=color
-								                 , colorbar=dict(title="count")
-								                 , colorscale='Inferno')
+    @staticmethod
+    def plot_chains(chains_df, max_chains=5):
+        fig = px.line(chains_df[chains_df['chain_ind']<max_chains], x='x', y='y', color='chain_ind'
+                        , title='Show chains'
+                        )
+        return fig
+    @staticmethod
+    def plot_line_color(x, y, color, y_name='', x_name='Contour length, nm', title=''):
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=x, y=y, mode='lines+markers',  name='angle'
+        						 , marker=dict(color=color
+        						                 , colorbar=dict(title="count")
+        						                 , colorscale='Inferno')
                                  , text=color
-								))
-		fig.update_layout(legend_orientation="h",
-		                  legend=dict(x=.5, xanchor="center"),
-		                  margin=dict(l=0, r=0, t=0, b=0),
+        						))
+        fig.update_layout(legend_orientation="h",
+                          legend=dict(x=.5, xanchor="center"),
+                          margin=dict(l=0, r=0, t=0, b=0),
+                          xaxis_title=x_name,
+                          yaxis_title=y_name,
                           )
-		fig.update_traces(hoverinfo="all", hovertemplate="Расстояние: %{x} nm<br>Значение: %{y}<br>Количество:%{text} ")
-		return fig
+        fig.update_traces(hoverinfo="all", hovertemplate="Contour length: %{x} nm<br>Value: %{y}<br>Count:%{text} ")
+        return fig
 
 
 class LinearMath:
