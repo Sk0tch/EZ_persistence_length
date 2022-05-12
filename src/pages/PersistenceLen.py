@@ -11,13 +11,31 @@ from src.pages.Utils import Parser, LinearMath, Painter, DataProcessor, LoadData
 
 MODE_PARAM = {
 'Средний квадрат угла':'sq_ang_mean',
-'Средний косинус угла':'cos_mean',
+'Логарифм косинуса угла':'ln_cos',
 'Средний угол':'ang_mean'
 }
 
 
+VAR_NAME = {
+'sq_ang_mean':'θ<sup>2</sup>',
+'ln_cos':'ln(<cos>)',
+'ang_mean':'θ'
+}
+
+def per_sq_ang(slope, stderr):
+    return 1/slope, 1/slope**2 * stderr
+
+def per_ln_cos(slope, stderr):
+    return -1/(2*slope), 1/(2*slope**2) * stderr
+
+PER_CALC_FUNC = {
+'sq_ang_mean':per_sq_ang,
+'ln_cos':per_ln_cos,
+}
+
+
 def approximation(data_src, x_name='distance', y_name='angle', min_x=10, max_x=200):
-    data = data_src[(data_src['distance']>=min_x) & (data_src['distance']<=max_x)]
+    data = data_src[(data_src[x_name]>=min_x) & (data_src[x_name]<=max_x)]
     x = data[x_name]
     y = data[y_name]
     lineregress_values = linregress(x, y)
@@ -28,20 +46,9 @@ def approximation(data_src, x_name='distance', y_name='angle', min_x=10, max_x=2
 
     return slope, intercept, stderr
 
-def approximation_block(data):
-    group=data.copy()
-    min_x, max_x = st.session_state.slider
-    slope, intercept, stderr = approximation(data_src=group, x_name='distance', y_name='sq_ang_mean', min_x=min_x, max_x=max_x)
-    st.plotly_chart(plot_approximation(group, slope, intercept, stderr, x_name='distance', y_name='sq_ang_mean', min_x=min_x, max_x=max_x))
-    col_a1, col_a2 = st.columns(2)
-    with col_a1:
-        st.write(f'slope = {slope:.2f} ± {stderr:.2f}')
-    with col_a2:
-        st.write(f'Persistance len: {1/slope:.2f} ± {1/slope**2 * stderr:.2f} nm')
-
 def plot_approximation(data_group, slope, intercept, stderr, x_name='distance', y_name='angle', min_x=0, max_x=200):
     fig = go.Figure()
-    data = data_group[(data_group['distance']>=min_x) & (data_group['distance']<=max_x)].copy()
+    data = data_group[(data_group[x_name]>=min_x) & (data_group[x_name]<=max_x)].copy()
     fig.add_trace(go.Scatter(
         x=data[x_name],
         y=data[y_name],
@@ -52,8 +59,7 @@ def plot_approximation(data_group, slope, intercept, stderr, x_name='distance', 
         x=[min_x, max_x],
         y=[min_x*slope + intercept, max_x*slope + intercept],
         mode="lines",
-        line=dict(color='red', width=2,
-                                  dash='dash'),
+        line=dict(color='red', width=2, dash='dash'),
         name="lineregression"
         ))
 
@@ -63,7 +69,7 @@ def plot_approximation(data_group, slope, intercept, stderr, x_name='distance', 
     fig.update_layout(
                     # title="Средний квадрат угла от длины сегмента",
                     xaxis_title="nm",
-                    yaxis_title="θ<sup>2</sup>",
+                    yaxis_title=VAR_NAME[y_name],
                     width=600,
                     height=600,
                     legend=dict(
@@ -73,16 +79,20 @@ def plot_approximation(data_group, slope, intercept, stderr, x_name='distance', 
                     x=0.01
     ))
 
-    # fig.add_annotation(x=100, y=0.2,
-    #             text=f'p = {1/slope:.2f} ± {1/slope**2 * stderr:.2f}',
-    #             showarrow=False,
-    #             bordercolor="#c7c7c7",
-    #             bgcolor="white",
-    #             font=dict(
-    #             size=20,
-    #             )
-    #                   )
     return fig
+
+def approximation_block(data, y_name=None):
+    group=data.copy()
+    min_x, max_x = st.session_state.slider
+    slope, intercept, stderr = approximation(data_src=group, x_name='distance', y_name=y_name, min_x=min_x, max_x=max_x)
+    st.plotly_chart(plot_approximation(group, slope, intercept, stderr, x_name='distance', y_name=y_name, min_x=min_x, max_x=max_x))
+    col_a1, col_a2 = st.columns(2)
+    p_len, p_err = PER_CALC_FUNC[y_name](slope, stderr)
+    with col_a1:
+        st.write(f'slope = {slope:.2f} ± {stderr:.2f}')
+    with col_a2:
+        st.write(f'Persistance len: {p_len:.2f} ± {p_err:.2f} nm')
+
 
 
 def update_slider():
@@ -101,7 +111,7 @@ def PersistenceLen():
     st.dataframe(group.head(5))
 
     value_name = st.selectbox('Способ подсчета',
-                                ('Средний квадрат угла', 'Средний косинус угла', 'Средний угол'))
+                                MODE_PARAM.keys())
 
     x = group['distance']
     y = group[MODE_PARAM[value_name]]
@@ -132,4 +142,4 @@ def PersistenceLen():
     st.button('calc', key='calc_button')
 
     if st.session_state.calc_button:
-        approximation_block(group)
+        approximation_block(group, y_name=MODE_PARAM[value_name])

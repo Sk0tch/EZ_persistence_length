@@ -40,7 +40,6 @@ class Painter:
 								                 , colorscale='Inferno')
                                  , text=color
 								))
-
 		fig.update_layout(legend_orientation="h",
 		                  legend=dict(x=.5, xanchor="center"),
 		                  margin=dict(l=0, r=0, t=0, b=0),
@@ -150,7 +149,8 @@ class DataProcessor():
         distance = np.array(distance, dtype=float, copy=False)
         cos = np.array(cos, dtype=float, copy=False)
         R = np.array(R, dtype=float, copy=False)
-        df_tmp = pd.DataFrame(data=np.dstack((distance, cos, R))[0], columns=['distance', 'cos', 'R'])
+        R = R**2
+        df_tmp = pd.DataFrame(data=np.dstack((distance, cos, R))[0], columns=['distance', 'cos', 'R_sq'])
         return df_tmp
 
     @staticmethod
@@ -179,6 +179,7 @@ class DataProcessor():
     def group_data(data):
         df_work = data.copy()
         df_work['distance'] = df_work['distance'].round(-1).copy()
-        group = df_work.groupby('distance').agg({'angle':['count', 'mean'], 'sq_angle':'mean', 'cos':'mean'}).dropna().reset_index()
-        group.columns = ['distance', 'count', 'ang_mean', 'sq_ang_mean', 'cos_mean']
+        group = df_work.groupby('distance').agg({'angle':['count', 'mean'], 'sq_angle':'mean', 'cos':'mean', 'R_sq':'mean'}).dropna().reset_index()
+        group.columns = ['distance', 'count', 'ang_mean', 'sq_ang_mean', 'cos_mean', 'R_sq_mean']
+        group['ln_cos'] = np.log(group['cos_mean'])
         return group
