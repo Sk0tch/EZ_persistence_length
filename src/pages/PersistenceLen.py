@@ -46,7 +46,8 @@ def plot_approximation(data_group, slope, intercept, stderr, x_name='distance', 
     fig.add_trace(go.Scatter(
         x=data[x_name],
         y=data[y_name],
-        name="data"
+        name="data",
+        mode='lines+markers',
     ))
 
     fig.add_trace(go.Scatter(
@@ -54,7 +55,8 @@ def plot_approximation(data_group, slope, intercept, stderr, x_name='distance', 
         y=[min_x*slope + intercept, max_x*slope + intercept],
         mode="lines",
         line=dict(color='red', width=2, dash='dash'),
-        name="lineregression"
+        name="lineregression",
+
         ))
 
     fig.update_xaxes(range=[min_x, max_x])
@@ -113,7 +115,7 @@ def PersistenceLen():
     max = int(group['distance'].max())
 
     min_val = min
-    max_val = int(group.loc[group['count']>100, 'distance'].max())
+    max_val = int(group.loc[group['count']>20, 'distance'].max())
 
 
     col1, col2 = st.columns(2)

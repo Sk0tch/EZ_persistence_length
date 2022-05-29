@@ -71,8 +71,8 @@ class Painter:
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=x, y=y, mode='lines+markers',  name='angle'
         						 , marker=dict(color=color
-        						                 , colorbar=dict(title="count")
-        						                 , colorscale='Inferno')
+    						                 , colorbar=dict(title="count")
+    						                 , colorscale='Inferno')
                                  , text=color
         						))
         fig.update_layout(legend_orientation="h",
@@ -215,8 +215,8 @@ class DataProcessor():
     @staticmethod
     def group_data(data):
         df_work = data.copy()
-        df_work['distance'] = df_work['distance'].round(-1).copy()
-        group = df_work.groupby('distance').agg({'angle':['count', 'mean'], 'sq_angle':'mean', 'cos':'mean', 'R_sq':'mean'}).dropna().reset_index()
-        group.columns = ['distance', 'count', 'ang_mean', 'sq_ang_mean', 'cos_mean', 'R_sq_mean']
+        df_work['distance'] = ((df_work['distance']/5).round(0)*5).copy()
+        group = df_work.groupby('distance').agg({'angle':['count', 'mean', 'std'], 'sq_angle':['mean', 'std'], 'cos':['mean', 'std'], 'R_sq':['mean', 'std']}).dropna().reset_index()
+        group.columns = ['distance', 'count', 'ang_mean', 'ang_std', 'sq_ang_mean', 'sq_ang_std', 'cos_mean', 'cos_std', 'R_sq_mean', 'R_sq_std']
         group['ln_cos'] = np.log(group['cos_mean'])
         return group
