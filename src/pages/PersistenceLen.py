@@ -12,7 +12,7 @@ from src.pages.Utils import Parser, LinearMath, Painter, DataProcessor, LoadData
 MODE_PARAM = {
 'Средний квадрат угла':'sq_ang_mean',
 'Логарифм косинуса угла':'ln_cos',
-'Средний угол':'ang_mean'
+# 'Средний угол':'ang_mean'
 }
 
 
@@ -79,13 +79,13 @@ def plot_approximation(data_group, slope, intercept, stderr, x_name='distance', 
 
 def approximation_block(data, y_name=None):
     group=data.copy()
-    min_x, max_x = st.session_state.slider
+    min_x, max_x = st.session_state.numeric1, st.session_state.numeric2
     slope, intercept, stderr = approximation(data_src=group, x_name='distance', y_name=y_name, min_x=min_x, max_x=max_x)
     st.plotly_chart(plot_approximation(group, slope, intercept, stderr, x_name='distance', y_name=y_name, min_x=min_x, max_x=max_x))
     col_a1, col_a2 = st.columns(2)
     p_len, p_err = PER_CALC_FUNC[y_name](slope, stderr)
     with col_a1:
-        st.write(f'slope = {slope:.2f} ± {stderr:.2f}')
+        st.write(f'Slope = {slope:.2f} ± {stderr:.2f}')
     with col_a2:
         st.write(f'Persistance len: {p_len:.2f} ± {p_err:.2f} nm')
 
@@ -121,14 +121,18 @@ def PersistenceLen():
     col1, col2 = st.columns(2)
 
     with col1:
-        st.number_input('min value', value = min_val, key = 'numeric1', on_change = update_slider)
+        st.number_input('min value', value = min_val, key = 'numeric1',
+                        # on_change = update_slider
+                        )
 
     with col2:
-        st.number_input('max value', value = max_val, key = 'numeric2', on_change = update_slider)
+        st.number_input('max value', value = max_val, key = 'numeric2',
+                        # on_change = update_slider
+                        )
 
-    st.slider('slider', min_val, max,
-                (min_val, max_val),
-                key = 'slider', on_change= update_numin)
+    # st.slider('slider', min_val, max,
+    #             (min_val, max_val),
+    #             key = 'slider', on_change= update_numin)
 
     st.button('calc', key='calc_button')
 

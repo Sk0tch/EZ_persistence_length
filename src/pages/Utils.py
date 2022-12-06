@@ -24,48 +24,34 @@ VAR_NAME = {
     'R_mean':'<R>',
 }
 
+@st.cache
+def convert_df(df):
+    # IMPORTANT: Cache the conversion to prevent computation on every rerun
+    return df.to_csv().encode('utf-8')
+
 def LoadData(data_type='angles'):
     return pd.read_csv(os.path.join(st.session_state.data_folder_path, DATA_MAP[data_type]))
 
 
 class Painter:
-    # @staticmethod
-    # def plot_approximation(x_data, y_data, popt, x_name='distance', y_name='angle'):
-    #     fig = go.Figure()
-    #     fig.add_trace(go.Scatter(
-    #                 x=x_data,
-    #                 y=y_data,
-    #                 name="data"
-    #     ))
-    #     fig.add_trace(go.Scatter(
-    #                 x=x_data,
-    #                 y=[exp_function(x, popt[0], popt[1], popt[2]) for x in x_data],
-    #                 mode="lines",
-    #                 line=dict(color='red', width=2, dash='dash'),
-    #                 name="fit"
-    #     ))
-    #     fig.update_xaxes(range=[x_data.min(), x_data.max()])
-    #     fig.update_yaxes(range=[y_data.min(), y_data.max()])
-    #     fig.update_layout(
-    #                 xaxis_title=x_name,
-    #                 yaxis_title=VAR_NAME[y_name],
-    #                 width=600,
-    #                 height=600,
-    #                 legend=dict(
-    #                     yanchor="top",
-    #                     y=0.99,
-    #                     xanchor="left",
-    #                     x=0.01
-    #                 )
-    #     )
-    #     return fig
-
     @staticmethod
     def plot_chains(chains_df, max_chains=5):
         fig = px.line(chains_df[chains_df['chain_ind']<max_chains], x='x', y='y', color='chain_ind'
-                        , title='Show chains'
+                        , title='Пример цепей'
                         )
+        fig.update_yaxes(
+                        scaleanchor="x",
+                        scaleratio=1,
+                        )
+        fig.update_layout(
+                          showlegend=False,
+                          # template='ggplot2',
+                          margin=dict(l=0, r=0, b=0),
+                          width=600,
+                          height=400,
+        )
         return fig
+
     @staticmethod
     def plot_line_color(x, y, color, y_name='', x_name='Contour length, nm', title=''):
         fig = go.Figure()
@@ -80,8 +66,29 @@ class Painter:
                           margin=dict(l=0, r=0, t=0, b=0),
                           xaxis_title=x_name,
                           yaxis_title=y_name,
+                          width=600,
+                          height=400,
                           )
         fig.update_traces(hoverinfo="all", hovertemplate="Contour length: %{x} nm<br>Value: %{y}<br>Count:%{text} ")
+        return fig
+
+    @staticmethod
+    def LengthHist(df):
+        fig = px.histogram( df,
+                            x='distance',
+                            title='Распределение контурных длин',
+                            labels={'distance':'Контурная длина, нм'},
+                            histnorm='percent',
+                            nbins=10
+                            )
+        fig.update_layout(showlegend=False,
+                          # legend=dict(x=.5, xanchor="center"),
+                          margin=dict(l=0, r=0, b=0),
+                          width=600,
+                          height=400,
+                          yaxis_title='% цепей',
+                          )
+        # fig.update_layout(bargap=0.2)
         return fig
 
 
@@ -99,6 +106,27 @@ class LinearMath:
     def get_len(v):
         """длина вектора"""
         return mt.sqrt(v[0] ** 2 + v[1] ** 2)
+
+    @staticmethod
+    def get_angle_radian(v1, v2):
+        """угол между двумя векторами"""
+        return mt.atan2(v2[0]-v1[0], v2[1]-v1[1])
+
+    @staticmethod
+    def turn_vec(v, angle):
+        """поворот вектора на заданный угол в радианах"""
+        x, y, = v[0], v[1]
+        x1=x*mt.cos(angle)-y*mt.sin(angle);
+        y1=y*mt.cos(angle)+x*mt.sin(angle)
+        return [x1, y1]
+
+    @staticmethod
+    def calc_angle(v1, v2):
+        """считает угол между двумя векторами через atan2"""
+        x1, y1 = v1[0], v1[1]
+        x2, y2 = v2[0], v2[1]
+        phi = (mt.atan2(y2, x2) - mt.atan2(y1, x1))
+        return phi
 
     @staticmethod
     def get_angle(v1, v2, precision=0.001, return_cos=False):
@@ -128,7 +156,6 @@ class LinearMath:
 class Parser:
     @staticmethod
     def parse_data(string_data):
-        # file = open(file_path)
         values = string_data.split("\n")
         data = []
         for chain in values:
@@ -155,7 +182,6 @@ class Parser:
 
 
 class DataProcessor():
-
     @staticmethod
     def avg_angle(vector_list,
                 # max_n=None,
@@ -165,33 +191,36 @@ class DataProcessor():
         возвращает DataFrame:
             # возвращает два np массива: расстояние между точками - угол между точками
         """
-        # if max_n == None:
-        #     max_n = len(vector_list)
         max_point = len(vector_list)
-
         df = pd.DataFrame()
         cos = []
         distance = []
         R = []
+        unit = []
+        steps_unit = []
         for n in (range(max_point)):
             vector_end = [0, 0]
             for i in range(max_point-n):
                 vector_end = LinearMath.sum_vectors(vector_end, vector_list[n+i])
+                unit.append(n)
+                steps_unit.append(i)
                 R.append(LinearMath.get_len(vector_end))
                 cos.append(LinearMath.get_angle(vector_list[n], vector_list[n+i], return_cos=return_cos))
                 if i == 0:
                     distance.append(LinearMath.get_len(vector_list[n+i]))
                 else:
                     distance.append(distance[-1] + LinearMath.get_len(vector_list[n+i]))
+        unit = np.array(unit, dtype=int, copy=False)
+        steps_unit = np.array(steps_unit, dtype=int, copy=False)
         distance = np.array(distance, dtype=float, copy=False)
         cos = np.array(cos, dtype=float, copy=False)
         R = np.array(R, dtype=float, copy=False)
         R = R**2
-        df_tmp = pd.DataFrame(data=np.dstack((distance, cos, R))[0], columns=['distance', 'cos', 'R_sq'])
+        df_tmp = pd.DataFrame(data=np.dstack((distance, cos, R, unit, steps_unit))[0], columns=['distance', 'cos', 'R_sq', 'unit_ind', 'steps_by_unit'])
         return df_tmp
 
     @staticmethod
-    def len_cos_df(chain_list, calc='cos'):
+    def len_cos_df(chain_lists, calc='cos'):
         if calc == 'cos':
             return_cos = True
         elif calc == 'angle':
@@ -200,7 +229,7 @@ class DataProcessor():
             print("error name 'calc'")
             return None
         df_final = pd.DataFrame()
-        for n, chain_list in enumerate(chain_list):
+        for n, chain_list in enumerate(chain_lists):
             chain = np.array(chain_list, dtype=float)
             vectors = []
             for i in (range(len(chain)-1)):

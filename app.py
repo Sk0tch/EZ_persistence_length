@@ -8,19 +8,18 @@ from src.pages.Base import BaseParamsInput as BaseParamsInput
 from src.pages.EDA import EDA as EDA
 from src.pages.PersistenceLen import PersistenceLen as PersistenceLen
 from src.pages.DistributionType import DistributionType as DistributionType
-# import src.pages.Utils as Utils
+from src.pages.Andulation import Andulation as Andulation
 from src.pages.Utils import Parser, LinearMath, Painter
 
 PAGES = {
-    'eda': EDA,
-    'persistent lenght': PersistenceLen,
-    'distribution type': DistributionType,
-    # 'bootstrap': Bootstrap,
-    # 'sequential testing': SequentialTesting
+    'EDA': EDA,
+    'Persistent Lenght': PersistenceLen,
+    'Distribution Type': DistributionType,
+    'Andulation': Andulation,
 }
 
 def InitializeUser():
-    if not os.path.exists('data'): os.mkdir('data') 
+    if not os.path.exists('data'): os.mkdir('data')
     if 'session_id' not in st.session_state.keys():
         st.session_state.session_id = str(abs(hash(datetime.datetime.now())))
         st.session_state.data_folder_path = os.path.join('data', st.session_state.session_id)

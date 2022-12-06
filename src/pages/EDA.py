@@ -4,23 +4,11 @@ import numpy as np
 import pandas as pd
 
 import plotly.express as px
-from src.pages.Utils import LoadData, Parser, LinearMath, Painter, DataProcessor
+# import plotly.io as pio
+# pio.templates.default = "ggplot2"
+# pio.templates.default = "plotly_white"
 
-@st.cache
-def convert_df(df):
-    # IMPORTANT: Cache the conversion to prevent computation on every rerun
-    return df.to_csv().encode('utf-8')
-
-def LengthHist(df):
-    fig = px.histogram(df,
-                        title='Распределение контурных длин',
-                        labels={'value':'Контурная длина, нм'},
-                        histnorm='percent',
-                        )
-    fig.update_layout(showlegend=False)
-    # fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
-    # fig.update_layout(bargap=0.2)
-    return fig
+from src.pages.Utils import LoadData, Parser, LinearMath, Painter, DataProcessor, convert_df
 
 def EDA():
     st.header('Exploratory Data Analysis')
@@ -72,4 +60,4 @@ def EDA():
     chains_numb = st.number_input(label='number of chains to display', min_value=1, max_value=count_chains, step=1)
     st.plotly_chart(Painter.plot_chains(data_coord, chains_numb))
 
-    st.plotly_chart(LengthHist(chain_length))
+    st.plotly_chart(Painter.LengthHist(chain_length))

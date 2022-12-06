@@ -6,7 +6,7 @@ import datetime as dt
 from src.pages.Utils import Parser, DataProcessor
 
 def DataInput():
-    uploaded_file = st.file_uploader("Choose .dat file")
+    uploaded_file = st.file_uploader("Выберите .dat файл")
     if uploaded_file is not None:
         bytes_data = uploaded_file.read().decode("utf-8")
         chains_coord_list = Parser.parse_data(bytes_data)
@@ -24,7 +24,7 @@ def DataInput():
     return False
 
 def BaseParamsInput():
-    st.header('Data upload')
+    st.header('Загрузка данных')
 
     is_data_upload = DataInput()
 

@@ -70,7 +70,7 @@ def plot_approximation(x_data, y_data, y_error, popt, x_name='distance', y_name=
     return fig
 
 def approximation_block(group, y_name=None, y_err_name=None, x_name='distance'):
-    min_x, max_x = st.session_state.slider
+    min_x, max_x = st.session_state.numeric1, st.session_state.numeric2
     data = group[(group[x_name]>=min_x) & (group[x_name]<=max_x)].copy()
     x = data[x_name]
     y = data[y_name]
@@ -93,12 +93,12 @@ def approximation_block(group, y_name=None, y_err_name=None, x_name='distance'):
     # with col_a3:
     #     st.write(f'c = {popt[2]:.2f} ± {perr[2]:.2f}')
 
-def update_slider():
-    st.session_state.slider = st.session_state.numeric1, st.session_state.numeric2
-
-def update_numin():
-    st.session_state.numeric1 = st.session_state.slider[0]
-    st.session_state.numeric2 = st.session_state.slider[1]
+# def update_slider():
+#     st.session_state.slider = st.session_state.numeric1, st.session_state.numeric2
+#
+# def update_numin():
+#     st.session_state.numeric1 = st.session_state.slider[0]
+#     st.session_state.numeric2 = st.session_state.slider[1]
 
 def DistributionType():
 
@@ -115,20 +115,24 @@ def DistributionType():
     st.plotly_chart(Painter.plot_line_color(x, y, color, y_name=VAR_NAME[y_name]))
 
     st.subheader('Approximation')
-    min = int(group.loc[group['count']>0, x_name].min())
+    min = int(group.loc[group['count']>0, x_name].min())+1
     max = int(group[x_name].max())
     min_val = min
     max_val = int(group.loc[group['count']>50, x_name].max())
 
     col1, col2 = st.columns(2)
     with col1:
-        st.number_input('min value', value = min_val, key = 'numeric1', on_change = update_slider)
+        st.number_input('min value', value = min_val, key = 'numeric1',
+                        # on_change = update_slider
+                        )
     with col2:
-        st.number_input('max value', value = max_val, key = 'numeric2', on_change = update_slider)
+        st.number_input('max value', value = max_val, key = 'numeric2',
+                        # on_change = update_slider
+                        )
 
-    st.slider('slider', min, max,
-                (min_val, max_val),
-                key = 'slider', on_change=update_numin)
+    # st.slider('slider', min, max,
+    #             (min_val, max_val),
+    #             key = 'slider', on_change=update_numin)
 
     st.button('calc', key='calc_button1')
     if st.session_state.calc_button1:
@@ -141,6 +145,6 @@ def DistributionType():
     st.plotly_chart(px.histogram(angles[angles['distance']==len], x='angle', title='N(θ)'))
     data_val = list(angles[angles['distance']==len]['angle'])
     # stat, p = normaltest(data_val)
-    stat, p = normaltest(data_val)
-    st.write(f"p = {p}")
-    print(data_val)
+    # stat, p = normaltest(data_val)
+    # st.write(f"p = {p}")
+    # print(data_val)
