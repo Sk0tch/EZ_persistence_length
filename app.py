@@ -13,9 +13,9 @@ from src.pages.Utils import Parser, LinearMath, Painter
 
 PAGES = {
     'EDA': EDA,
-    'Persistent Lenght': PersistenceLen,
-    'Distribution Type': DistributionType,
-    'Andulation': Andulation,
+    'Персистентная длина': PersistenceLen,
+    'Тип распределения': DistributionType,
+    'Андуляции': Andulation,
 }
 
 def InitializeUser():
@@ -26,8 +26,8 @@ def InitializeUser():
         os.mkdir(st.session_state.data_folder_path)
 
 def Navigation():
-    st.sidebar.title('Navigation')
-    selection = st.sidebar.radio('Go to', list(PAGES.keys()))
+    st.sidebar.title('Анализ полимера')
+    selection = st.sidebar.radio('Перейти к', list(PAGES.keys()))
     page = PAGES[selection]
 
     return page

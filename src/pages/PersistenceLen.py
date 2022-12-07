@@ -100,7 +100,7 @@ def update_numin():
 
 
 def PersistenceLen():
-    st.header('Persistence length calculation')
+    st.header('Подсчет персистентной длины')
     value_name = st.selectbox('Способ подсчета',
                                 MODE_PARAM.keys())
     group = LoadData('group')
@@ -109,7 +109,7 @@ def PersistenceLen():
     color = group['count']
     st.plotly_chart(Painter.plot_line_color(x, y, color, y_name=VAR_NAME[MODE_PARAM[value_name]]))
 
-    st.subheader('Approximation')
+    st.subheader('Аппроксимация')
 
     min = int(group['distance'].min())
     max = int(group['distance'].max())

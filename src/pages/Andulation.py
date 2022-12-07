@@ -31,11 +31,11 @@ def Andulation():
        (min_dist_diff, max_dist_diff)  = st.slider('Диапазон контурной длины андуляции', 0, 50, (5, 25), key = 'dist')
        (min_rad_diff, max_rad_diff)    = st.slider('Диапазон угла андуляции', 0., 3.15, (0.5, 6.28), key = 'rad')
        chains_count                    = st.slider('Количество цепей на первом графике', 1, len(chns.chains_ind), 1, key = 'chain_count')
-       submitted                       = st.form_submit_button("Run")
+       submitted                       = st.form_submit_button("Пуск")
        if submitted:
-           st.write("step:", step, "window:", window)
-           st.write("distance andulation:", min_dist_diff, "-", max_dist_diff)
-           st.write("angle andulation:", min_rad_diff, "-", max_rad_diff)
+           st.write("Шаг интерполяции (мкм):", step, "Окно сглаживания (мкм):", window)
+           st.write("Линейный размер андуляции (мкм):", min_dist_diff, "-", max_dist_diff)
+           st.write("Угловой размер андуляции:", min_rad_diff, "-", max_rad_diff)
     andulation_df_full = chns.andulation_interval_frame_all_chains(step=step,
                                                                 window=window,
                                                                 min_rad_diff=min_rad_diff,
@@ -54,8 +54,8 @@ def Andulation():
     st.dataframe(andulation_ditr_df)
     csv_andul = convert_df(andulation_ditr_df)
     st.download_button(
-         label="Download data as CSV",
+         label="Загрузить CSV файл",
          data=csv_andul,
-         file_name='data_andulation.csv',
+         file_name='data_undulation.csv',
          mime='text/csv',
      )

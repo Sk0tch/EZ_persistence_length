@@ -102,7 +102,7 @@ def approximation_block(group, y_name=None, y_err_name=None, x_name='distance'):
 
 def DistributionType():
 
-    st.header('Distribution Type')
+    st.header('Тип распределения')
     group = LoadData('group')
     angles = LoadData('angles')
 
@@ -114,7 +114,7 @@ def DistributionType():
     color = group['count']
     st.plotly_chart(Painter.plot_line_color(x, y, color, y_name=VAR_NAME[y_name]))
 
-    st.subheader('Approximation')
+    st.subheader('Аппроксимация')
     min = int(group.loc[group['count']>0, x_name].min())+1
     max = int(group[x_name].max())
     min_val = min
@@ -122,11 +122,11 @@ def DistributionType():
 
     col1, col2 = st.columns(2)
     with col1:
-        st.number_input('min value', value = min_val, key = 'numeric1',
+        st.number_input('Минимальное значение', value = min_val, key = 'numeric1',
                         # on_change = update_slider
                         )
     with col2:
-        st.number_input('max value', value = max_val, key = 'numeric2',
+        st.number_input('Максимальное значение', value = max_val, key = 'numeric2',
                         # on_change = update_slider
                         )
 
@@ -138,7 +138,7 @@ def DistributionType():
     if st.session_state.calc_button1:
         approximation_block(group, y_name=y_name, y_err_name=y_err_name)
 
-    st.subheader('N(θ(l)) distribution')
+    st.subheader('N(θ(l)) распределение')
     st.number_input('len for hist (nm)', value=50, key='hist_mun')
     len = st.session_state.hist_mun
     angles['distance'] = angles['distance'].round(-1)
