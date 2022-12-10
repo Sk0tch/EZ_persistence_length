@@ -46,6 +46,7 @@ class Chain:
             remove_emissions = np.vectorize(lambda x: x-np.sign(x)*mt.pi*2 if abs(x)>3*std else x)
             rad              = remove_emissions(rad)
         self.length = length.cumsum()
+        self.contour_length = self.length.max()
         self.rad_diff = rad
         self.rad    = rad.cumsum()
         self.std    = std
@@ -153,8 +154,8 @@ class Chain:
         self.find_inflection_points()
         return self.andulation_interval_frame(min_rad_diff=min_rad_diff, max_rad_diff=max_rad_diff, min_dist_diff=min_dist_diff, max_dist_diff=max_dist_diff)
 
+# @st.cache
 class Chains:
-
     def __init__(self, chains_coord_df):
         """
         x, y - выборки, np array
@@ -175,6 +176,7 @@ class Chains:
                                              min_dist_diff=0,
                                              max_dist_diff=1000):
         df_dist_all_chains = pd.DataFrame()
+        contours_length_all = 0
         for ind, ch in enumerate(self.chains_list_obj):
             df = ch.run(step=step,
                         window=window,
@@ -183,14 +185,15 @@ class Chains:
                         min_dist_diff=min_dist_diff,
                         max_dist_diff=max_dist_diff)
             df['chain_ind'] = ind
+            contours_length_all += ch.contour_length
             df_dist_all_chains = pd.concat([df_dist_all_chains, df], ignore_index=True)
-        return df_dist_all_chains.reset_index(drop=True)
+        return df_dist_all_chains.reset_index(drop=True), contours_length_all
 
     @staticmethod
     def distribution(df):
         df = df[df['andulation']==1]
         df = df[df['distance_left']==df['distance']]
-        df['effective_andulation'] = df['rad_diff'] / df['distance_diff']
+        df['effective_andulation'] = df['distance_diff'] / df['rad_diff']
         df = df[['distance_diff', 'rad_diff', 'effective_andulation', 'chain_ind']].reset_index(drop=True)
         return df
 
@@ -405,19 +408,30 @@ def plots_with_andulation(df_dist_all_chains, count=1):
     for n, indx in enumerate(indxs):
         st.plotly_chart(show_plots_with_andulation(df_dist_all_chains, indx))
 
-def distribution_show(finish_data):
+def distribution_show(finish_data, norm, contours_length_all, linear_bins=None, rad_bins=None, effective_bins=None):
     fig = make_subplots(rows=2, cols=2,
                         subplot_titles=['Линейный размер андуляции', 'Угловой размер андуляции', 'Эффективный радиус андуляции'],
                         specs=[[{"type": 'bar'}, {"type": "bar"}],
                                [{"colspan": 2} , None]],
                         vertical_spacing = 0.15)
-    trace0 = go.Histogram(x=finish_data['distance_diff'],
-                          histnorm='percent'
-                         )
-    trace1 = go.Histogram(x=finish_data['rad_diff'],
-                          histnorm='percent')
-    trace2 = go.Histogram(x=finish_data['effective_andulation'],
-                          histnorm='percent')
+
+
+    hist0 = np.histogram(finish_data['distance_diff'], bins=linear_bins)
+    hist1 = np.histogram(finish_data['rad_diff'], bins=rad_bins)
+    hist2 = np.histogram(finish_data['effective_andulation'], bins=effective_bins)
+
+    if norm == 'length':
+        norm_on0, norm_on1, norm_on2 = contours_length_all/1000, contours_length_all/1000, contours_length_all/1000
+    elif norm == 'perc':
+        norm_on0 = sum(hist0[0])/100
+        norm_on1 = sum(hist1[0])/100
+        norm_on2 = sum(hist2[0])/100
+    else:
+        norm_on0, norm_on1, norm_on2 = 1, 1, 1
+
+    trace0 = go.Bar(x=hist0[1], y = hist0[0]/norm_on0)
+    trace1 = go.Bar(x=hist1[1], y = hist1[0]/norm_on1)
+    trace2 = go.Bar(x=hist2[1], y = hist2[0]/norm_on2)
     fig.append_trace(trace0, 1, 1)
     fig.append_trace(trace1, 1, 2)
     fig.append_trace(trace2, 2, 1)

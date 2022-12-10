@@ -13,6 +13,11 @@ import plotly.graph_objects as go
 from src.pages.Utils import LoadData, convert_df
 from src.pages.UtilsAndulation import Chain, Chains, show_plots_with_andulation, distribution_show, plots_with_andulation
 
+NORM_DICT = {
+    'Нормировка на контурную длину / 1000':'length',
+    'Без нормировки':None,
+    'Процент':'perc'
+}
 # @st.cache
 def chains_load():
     coord = LoadData('coord')
@@ -36,7 +41,7 @@ def Andulation():
            st.write("Шаг интерполяции (мкм):", step, "Окно сглаживания (мкм):", window)
            st.write("Линейный размер андуляции (мкм):", min_dist_diff, "-", max_dist_diff)
            st.write("Угловой размер андуляции:", min_rad_diff, "-", max_rad_diff)
-    andulation_df_full = chns.andulation_interval_frame_all_chains(step=step,
+    andulation_df_full, contours_length_all = chns.andulation_interval_frame_all_chains(step=step,
                                                                 window=window,
                                                                 min_rad_diff=min_rad_diff,
                                                                 max_rad_diff=max_rad_diff,
@@ -48,7 +53,24 @@ def Andulation():
     plots_with_andulation(andulation_df_full, count=int(chains_count))
 
     st.subheader('Распределения')
-    st.plotly_chart(distribution_show(andulation_ditr_df))
+    col1, col2 = st.columns(2)
+    with col1:
+        select_bins = st.selectbox('Выбор количества интервалов', ('Автоматически', 'Вручную'))
+    with col2:
+        select_norm = st.selectbox('Нормировка', (NORM_DICT.keys()))
+    if select_bins == 'Вручную':
+        st.write('Количество интервалов:')
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            linear_bins=int(st.number_input('Линейный размер', value=20))
+        with col2:
+            rad_bins=int(st.number_input('Угловой размер', value=20))
+        with col3:
+            effective_bins=int(st.number_input('Эффективный радиус', value=20))
+    else:
+        linear_bins, rad_bins, effective_bins = 'auto', 'auto', 'auto'
+
+    st.plotly_chart(distribution_show(andulation_ditr_df, norm=NORM_DICT[select_norm], contours_length_all=contours_length_all, linear_bins=linear_bins, rad_bins=rad_bins, effective_bins=effective_bins))
 
     st.subheader('Данные')
     st.dataframe(andulation_ditr_df)
