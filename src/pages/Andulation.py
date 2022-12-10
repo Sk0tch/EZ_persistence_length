@@ -38,46 +38,47 @@ def Andulation():
        chains_count                    = st.slider('Количество цепей на первом графике', 1, len(chns.chains_ind), 1, key = 'chain_count')
        submitted                       = st.form_submit_button("Пуск")
        if submitted:
-           st.write("Шаг интерполяции (мкм):", step, "Окно сглаживания (мкм):", window)
-           st.write("Линейный размер андуляции (мкм):", min_dist_diff, "-", max_dist_diff)
+           st.write("Шаг интерполяции:", step, "Окно сглаживания:", window)
+           st.write("Линейный размер андуляции:", min_dist_diff, "-", max_dist_diff)
            st.write("Угловой размер андуляции:", min_rad_diff, "-", max_rad_diff)
-    andulation_df_full, contours_length_all = chns.andulation_interval_frame_all_chains(step=step,
-                                                                window=window,
-                                                                min_rad_diff=min_rad_diff,
-                                                                max_rad_diff=max_rad_diff,
-                                                                min_dist_diff=min_dist_diff,
-                                                                max_dist_diff=max_dist_diff)
-    andulation_ditr_df = Chains.distribution(andulation_df_full)
-    # st.plotly_chart(show_plots_with_andulation(andulation_df_full, chains=int(chain_count)-1))
-    # st.plotly_chart(plots_with_andulation(andulation_df_full, count=int(chains_count)))
-    plots_with_andulation(andulation_df_full, count=int(chains_count))
+    if submitted:
+        andulation_df_full, contours_length_all = chns.andulation_interval_frame_all_chains(step=step,
+                                                                    window=window,
+                                                                    min_rad_diff=min_rad_diff,
+                                                                    max_rad_diff=max_rad_diff,
+                                                                    min_dist_diff=min_dist_diff,
+                                                                    max_dist_diff=max_dist_diff)
+        andulation_ditr_df = Chains.distribution(andulation_df_full)
+        # st.plotly_chart(show_plots_with_andulation(andulation_df_full, chains=int(chain_count)-1))
+        # st.plotly_chart(plots_with_andulation(andulation_df_full, count=int(chains_count)))
+        plots_with_andulation(andulation_df_full, count=int(chains_count))
 
-    st.subheader('Распределения')
-    col1, col2 = st.columns(2)
-    with col1:
-        select_bins = st.selectbox('Выбор количества интервалов', ('Автоматически', 'Вручную'))
-    with col2:
-        select_norm = st.selectbox('Нормировка', (NORM_DICT.keys()))
-    if select_bins == 'Вручную':
-        st.write('Количество интервалов:')
-        col1, col2, col3 = st.columns(3)
+        st.subheader('Распределения')
+        col1, col2 = st.columns(2)
         with col1:
-            linear_bins=int(st.number_input('Линейный размер', value=20))
+            select_bins = st.selectbox('Выбор количества интервалов', ('Автоматически', 'Вручную'))
         with col2:
-            rad_bins=int(st.number_input('Угловой размер', value=20))
-        with col3:
-            effective_bins=int(st.number_input('Эффективный радиус', value=20))
-    else:
-        linear_bins, rad_bins, effective_bins = 'auto', 'auto', 'auto'
+            select_norm = st.selectbox('Нормировка', (NORM_DICT.keys()))
+        if select_bins == 'Вручную':
+            st.write('Количество интервалов:')
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                linear_bins=int(st.number_input('Линейный размер', value=20))
+            with col2:
+                rad_bins=int(st.number_input('Угловой размер', value=20))
+            with col3:
+                effective_bins=int(st.number_input('Эффективный радиус', value=20))
+        else:
+            linear_bins, rad_bins, effective_bins = 'auto', 'auto', 'auto'
 
-    st.plotly_chart(distribution_show(andulation_ditr_df, norm=NORM_DICT[select_norm], contours_length_all=contours_length_all, linear_bins=linear_bins, rad_bins=rad_bins, effective_bins=effective_bins))
-
-    st.subheader('Данные')
-    st.dataframe(andulation_ditr_df)
-    csv_andul = convert_df(andulation_ditr_df)
-    st.download_button(
-         label="Загрузить CSV файл",
-         data=csv_andul,
-         file_name='data_undulation.csv',
-         mime='text/csv',
-     )
+        st.plotly_chart(distribution_show(andulation_ditr_df, norm=NORM_DICT[select_norm], contours_length_all=contours_length_all, linear_bins=linear_bins, rad_bins=rad_bins, effective_bins=effective_bins))
+        st.write('Общая контурная длина:', round(contours_length_all, 1))
+        st.subheader('Данные')
+        st.dataframe(andulation_ditr_df)
+        csv_andul = convert_df(andulation_ditr_df)
+        st.download_button(
+             label="Загрузить CSV файл",
+             data=csv_andul,
+             file_name='data_undulation.csv',
+             mime='text/csv',
+         )
