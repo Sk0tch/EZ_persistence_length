@@ -94,15 +94,15 @@ class Chain:
         finish_data = finish_data.merge(inflection_points, on='distance', how='inner').fillna(0)
         i=1
         ind_list = []
-        while True:
+        while i<len(finish_data)-1:
+            # if i >= len(finish_data)-1:
+            #     break
             dist_diff = abs(finish_data['distance'].iloc[i]-finish_data['distance'].iloc[i-1])
             rad_diff = abs(finish_data['rad'].iloc[i]-finish_data['rad'].iloc[i-1])
             if (dist_diff<min_dist_diff)|(rad_diff<min_rad_diff):
                 finish_data = finish_data.drop([i-1, i]).reset_index(drop=True)
                 i = 1
                 continue
-            if i >= len(finish_data)-1:
-                break
             i += 1
         finish_data['distance_right'] = finish_data['distance'].shift(-1)
         finish_data                   = finish_data.rename(columns={'distance':'distance_left'})

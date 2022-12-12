@@ -48,6 +48,12 @@ def Andulation():
                                                                 min_dist_diff=min_dist_diff,
                                                                 max_dist_diff=max_dist_diff)
     andulation_ditr_df = Chains.distribution(andulation_df_full)
+    andulation_ditr_df = andulation_ditr_df[
+    (andulation_ditr_df['distance_diff'] >= min_dist_diff) &
+    (andulation_ditr_df['distance_diff'] <= max_dist_diff) &
+    (andulation_ditr_df['rad_diff'] >= min_rad_diff) &
+    (andulation_ditr_df['rad_diff'] <= max_rad_diff)
+    ]
     # st.plotly_chart(show_plots_with_andulation(andulation_df_full, chains=int(chain_count)-1))
     # st.plotly_chart(plots_with_andulation(andulation_df_full, count=int(chains_count)))
     plots_with_andulation(andulation_df_full, count=int(chains_count))

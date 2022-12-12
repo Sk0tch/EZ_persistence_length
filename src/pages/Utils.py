@@ -210,6 +210,10 @@ class DataProcessor():
                     distance.append(LinearMath.get_len(vector_list[n+i]))
                 else:
                     distance.append(distance[-1] + LinearMath.get_len(vector_list[n+i]))
+                    """ЭТО НУЖНО ИСПРАВИТЬ"""
+                    if distance[-1] >= 1:
+                        break
+
         unit = np.array(unit, dtype=int, copy=False)
         steps_unit = np.array(steps_unit, dtype=int, copy=False)
         distance = np.array(distance, dtype=float, copy=False)
